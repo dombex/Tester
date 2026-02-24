@@ -159,12 +159,11 @@
     </footer>
 
     <div class="cart-bar" id="cart-bar">
-        <div id="discount-notice" class="discount-notice notice-off">
-            </div>
+        <div id="discount-notice" class="discount-notice notice-off"></div>
 
         <select class="shipping-select" id="shipping-method" onchange="updateCartUI()">
             <option value="0">Metode: Dine In / Ambil Sendiri (Gratis)</option>
-            <option value="5000">Metode: Delivery < 5km (Gratis)</option>
+            <option value="0">Metode: Delivery < 5km (Gratis)</option>
             <option value="10000">Metode: Delivery < 10km (+Rp 10.000)</option>
         </select>
 
@@ -184,13 +183,13 @@
         const noWA = "6285725493220"; 
         const sheetDB_URL = "https://sheetdb.io/api/v1/s0wonu3gxal7h"; 
         
-        const MIN_BELANJA_DISKON = 100000; // Syarat minimal belanja (Ganti angka saja)
-        const NOMINAL_DISKON = 5000;      // Jumlah potongan harga (Ganti angka saja)
+        const MIN_BELANJA_DISKON = 100000; // Syarat minimal belanja
+        const NOMINAL_DISKON = 5000;      // Jumlah potongan harga
         // ==========================================
 
         let menuData = []; let cart = [];
 
-        // Fungsi format rupiah biar rapi
+        // Fungsi format rupiah
         const formatRp = (n) => "Rp " + parseInt(n).toLocaleString('id-ID');
 
         async function fetchData() {
@@ -252,7 +251,7 @@
             else { const m = menuData.find(x => x.name === name); cart.push({ name, price: parseInt(m.price), qty: 1 }); }
             updateCartUI(); 
             const activeTab = document.querySelector('.tab-btn.active').innerText.toLowerCase();
-            let cat = activeTab.includes('berat') ? 'makanan' : activeTab.includes('hits') ? 'jajanan' : activeTab.includes('kue') ? 'kue' : activeTab.includes('minum') ? 'lainnya' : 'semua';
+            let cat = activeTab.includes('makanan') ? 'makanan' : activeTab.includes('hits') ? 'jajanan' : activeTab.includes('kue') ? 'kue' : activeTab.includes('minum') ? 'lainnya' : 'semua';
             render(cat);
         }
 
@@ -261,11 +260,9 @@
             const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const notice = document.getElementById('discount-notice');
             let totalFinal = subtotal + ship;
-            let diskonDidapat = 0;
 
             if (subtotal >= MIN_BELANJA_DISKON) {
-                diskonDidapat = NOMINAL_DISKON;
-                totalFinal -= diskonDidapat;
+                totalFinal -= NOMINAL_DISKON;
                 notice.innerText = `🎉 Selamat! Anda dapat Diskon ${formatRp(NOMINAL_DISKON)}`;
                 notice.className = "discount-notice notice-on";
                 document.getElementById('cart-total').style.color = "var(--discount-color)";
@@ -285,17 +282,22 @@
             const shipVal = parseInt(document.getElementById('shipping-method').value);
             const shipText = document.getElementById('shipping-method').options[document.getElementById('shipping-method').selectedIndex].text;
             const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            
+            let diskonDidapat = 0;
             let diskonText = "";
-            let totalAkhir = subtotal + shipVal;
 
             if (subtotal >= MIN_BELANJA_DISKON) {
+                diskonDidapat = NOMINAL_DISKON;
                 diskonText = `\nPotongan Diskon: -${formatRp(NOMINAL_DISKON)}`;
-                totalAkhir -= NOMINAL_DISKON;
             }
+
+            // HITUNG TOTAL AKHIR DENGAN BENAR
+            const totalAkhir = (subtotal + shipVal) - diskonDidapat;
 
             const pesan = `*STRUK PESANAN - Tester Food*\n----------------------------------\n` +
                           cart.map(m => `✅ *${m.name}* (x${m.qty})`).join('\n') + 
                           `\n----------------------------------\nSubtotal: ${formatRp(subtotal)}\nPengiriman: ${shipText}${diskonText}\n*TOTAL AKHIR: ${formatRp(totalAkhir)}*\n----------------------------------\n_Mohon info ketersediaannya ya Ka..._`;
+            
             window.open(`https://wa.me/${noWA}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
 

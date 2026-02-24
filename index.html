@@ -86,7 +86,7 @@
         <div class="main-logo-container">
             <img src="Logo.jpg" onerror="this.src='https://via.placeholder.com/150'">
         </div>
-        <h1>Tester Food<br><span>Bikin Nagih Tiap Gigitan!</span> 🤤</h1>
+        <h1>Tester Food<br><span>Bikin Nagih Tiap Gigitan!</span> ðŸ¤¤</h1>
         <p class="hero-desc">Sajian sepenuh hati untuk harimu yang istimewa.</p>
     </section>
 
@@ -104,8 +104,8 @@
         <button class="tab-btn active" onclick="filterMenu('semua', this)">Semua</button>
         <button class="tab-btn" onclick="filterMenu('makanan', this)">Makan Berat</button>
         <button class="tab-btn" onclick="filterMenu('jajanan', this)">Cemilan Hits</button>
-        <button class="tab-btn" onclick="filterMenu('kue', this)">Kue & Manis</button>
-        <button class="tab-btn" onclick="filterMenu('lainnya', this)">📦 Lain-lain</button>
+        <button class="tab-btn" onclick="filterMenu('kue', this)">Aneka Kue</button>
+        <button class="tab-btn" onclick="filterMenu('lainnya', this)">ðŸ“¦ Minuman</button>
     </div>
 
     <div class="menu-container">
@@ -115,20 +115,20 @@
 
     <div class="disclaimer-container" style="padding: 30px 5% 10px;">
         <div style="background: rgba(255, 249, 240, 0.9); border-left: 4px solid #FF5733; padding: 15px; border-radius: 12px;">
-            <h4>⚠️ Catatan Pesanan:</h4>
-            <p style="font-size: 11px; color: #666; line-height: 1.6;">• Selain pelanggan tetap, <b>wajib transfer dahulu</b> sebelum pesanan diproses.</p>
-            <p style="font-size: 11px; color: #666; line-height: 1.6;">• Waktu pengantaran/COD akan dikonfirmasi via WhatsApp (Jam menyesuaikan).</p>
-            <p style="font-size: 11px; color: #666; line-height: 1.6;">• Menu tidak selalu tersedia setiap hari. Mohon <b>cek ketersediaan</b> terlebih dahulu.</p>
+            <h4>âš ï¸ Catatan Pesanan:</h4>
+            <p style="font-size: 11px; color: #666; line-height: 1.6;">â€¢ Selain pelanggan tetap, <b>wajib transfer dahulu</b> sebelum pesanan diproses.</p>
+            <p style="font-size: 11px; color: #666; line-height: 1.6;">â€¢ Waktu pengantaran/COD akan dikonfirmasi via WhatsApp (Jam menyesuaikan).</p>
+            <p style="font-size: 11px; color: #666; line-height: 1.6;">â€¢ Menu tidak selalu tersedia setiap hari. Mohon <b>cek ketersediaan</b> terlebih dahulu.</p>
         </div>
     </div>
 
     <footer style="padding: 20px 5% 40px; text-align: center;">
-        <p style="font-style: italic; font-size: 12px; color: #333; margin-bottom: 10px; font-weight: 600;">"Kebahagiaan dimulai dari perut yang terisi." ✨</p>
+        <p style="font-style: italic; font-size: 12px; color: #333; margin-bottom: 10px; font-weight: 600;">"Kebahagiaan dimulai dari perut yang terisi." âœ¨</p>
         <div style="display: flex; justify-content: center; gap: 20px; margin-top: 15px;">
             <a href="#" target="_blank" style="text-decoration: none; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: linear-gradient(45deg, #f09433, #bc1888); color:white;"><i class="fab fa-instagram"></i></a>
             <a href="#" target="_blank" style="text-decoration: none; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #1877F2; color:white;"><i class="fab fa-facebook-f"></i></a>
         </div>
-        <p style="margin-top: 15px; font-size: 10px; color: #777;">&copy; 2026 Miyo Delivery Order Tahuna. Made with ❤️</p>
+        <p style="margin-top: 15px; font-size: 10px; color: #777;">&copy; 2026 Food Tester. Made with â¤ï¸</p>
     </footer>
 
     <div class="cart-bar" id="cart-bar">
@@ -204,7 +204,7 @@
                     </div>
                     <h3>${item.name}</h3>
                     <div class="price-tag">${formatRupiah(item.price)}</div>
-                    <div class="${isHabis ? 'lbl-habis' : 'lbl-tersedia'}">${isHabis ? '❌ Stok Habis' : '✅ Tersedia'}</div>
+                    <div class="${isHabis ? 'lbl-habis' : 'lbl-tersedia'}">${isHabis ? 'âŒ Stok Habis' : 'âœ… Tersedia'}</div>
                     ${actionHtml}
                 </div>`;
             });
@@ -239,8 +239,8 @@
 
         function checkoutWA() {
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const pesan = `*STRUK PESANAN - Miyo Delivery*\n----------------------------------\n\n` +
-                          cart.map(m => `👉 *${m.name}* [x${m.qty}]`).join('\n') + 
+            const pesan = `*STRUK PESANAN - TesterFood*\n----------------------------------\n\n` +
+                          cart.map(m => `ðŸ‘‰ *${m.name}* [x${m.qty}]`).join('\n') + 
                           `\n\n----------------------------------\n*TOTAL ESTIMASI: ${formatRupiah(total)}*\n----------------------------------\n_Mohon info ketersediaannya ya Ka..._`;
             window.open(`https://wa.me/${noWA}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
@@ -248,7 +248,7 @@
         function checkStatus(ms) {
             const h = new Date().getHours(); const b = document.getElementById('shop-status-badge');
             let open = (h >= 8 && h < 20); if(ms && ms.toLowerCase() === 'tutup') open = false;
-            b.innerText = open ? "● Toko Buka" : "● Toko Tutup";
+            b.innerText = open ? "â— Toko Buka" : "â— Toko Tutup";
             b.className = open ? "status-badge status-open" : "status-badge status-closed";
         }
 

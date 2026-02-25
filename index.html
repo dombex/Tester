@@ -80,7 +80,6 @@
         }
         .notice-off { background: #f1f3f5; color: #888; }
         .notice-on { background: #fce4ec; color: var(--discount-color); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .shipping-select { background: #f1f3f5; border: 1.5px solid #e9ecef; color: #444; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 600; width: 100%; outline: none; }
         .cart-footer { display: flex; justify-content: space-between; align-items: center; }
@@ -134,7 +133,7 @@
         <button class="tab-btn" onclick="filterMenu('makanan', this)"> 🍛 Makanan</button>
         <button class="tab-btn" onclick="filterMenu('jajanan', this)"> 🍟 Cemilan Hits</button>
         <button class="tab-btn" onclick="filterMenu('kue', this)"> 🍰 Aneka Kue</button>
-        <button class="tab-btn" onclick="filterMenu('lainnya', this)"> 🍹Minuman</button>
+        <button class="tab-btn" onclick="filterMenu('minuman', this)"> 🍹 Minuman</button>
         <button class="tab-btn" onclick="filterMenu('semua', this)">Semua Menu</button>
     </div>
 
@@ -161,13 +160,11 @@
 
     <div class="cart-bar" id="cart-bar">
         <div id="discount-notice" class="discount-notice notice-off"></div>
-
         <select class="shipping-select" id="shipping-method" onchange="updateCartUI()">
             <option value="0">Metode: Dine In / Ambil Sendiri (Gratis)</option>
             <option value="0">Metode: Delivery < 5km (Gratis)</option>
             <option value="10000">Metode: Delivery < 10km (+Rp 10.000)</option>
         </select>
-
         <div class="cart-footer">
             <div>
                 <div id="cart-count" style="font-size: 11px; color: #888; font-weight: 600;">0 Item</div>
@@ -184,7 +181,6 @@
         const NOMINAL_DISKON = 5000;      
 
         let menuData = []; let cart = [];
-
         const formatRp = (n) => "Rp " + parseInt(n).toLocaleString('id-ID');
 
         async function fetchData() {
@@ -193,12 +189,12 @@
                 menuData = await response.json();
                 document.getElementById('loading-text').style.display = 'none';
                 checkStatus(menuData[0].toko); 
-                // DEFAULT TAMPILKAN PROMO SAAT BUKA
                 render('promo'); 
                 initPromo(menuData);
             } catch (e) { document.getElementById('loading-text').innerText = "Gagal memuat!"; }
         }
 
+        // SLIDESHOW LOGIC
         function initPromo(data) {
             const promoItems = data.filter(i => i.promo_img && i.promo_img !== "");
             if (promoItems.length === 0) return;
@@ -222,20 +218,15 @@
 
         function render(f = 'promo') {
             const list = document.getElementById('menu-list'); list.innerHTML = "";
-            
-            // LOGIKA FILTER BARU
             const filtered = menuData.filter(i => {
                 if (!i.name) return false;
                 if (f === 'semua') return true;
-                if (f === 'promo') {
-                    // Cek apakah ada promo_price ATAU ada teks di kolom promo
-                    return (i.promo_price && parseInt(i.promo_price) > 0) || (i.promo && i.promo.trim() !== "");
-                }
-                return i.cat === f;
+                if (f === 'promo') return (i.promo_price && parseInt(i.promo_price) > 0) || (i.promo && i.promo.trim() !== "");
+                return i.cat && i.cat.toLowerCase() === f.toLowerCase();
             });
 
-            if (filtered.length === 0 && f === 'promo') {
-                list.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">Belum ada menu promo hari ini.</div>`;
+            if (filtered.length === 0) {
+                list.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">Menu belum tersedia.</div>`;
                 return;
             }
 
@@ -243,16 +234,12 @@
                 const cartItem = cart.find(c => c.name === item.name);
                 const qty = cartItem ? cartItem.qty : 0;
                 const isHabis = item.status === "Habis";
-
+                
                 let hargaHtml = `<div class="price-tag">${formatRp(item.price)}</div>`;
                 if (item.promo_price && parseInt(item.promo_price) > 0) {
-                    hargaHtml = `
-                        <div style="margin-bottom: 10px;">
-                            <span style="text-decoration: line-through; color: #999; font-size: 11px;">${formatRp(item.price)}</span>
-                            <div class="price-tag" style="color: var(--discount-color); margin-top: -5px;">${formatRp(item.promo_price)}</div>
-                        </div>`;
+                    hargaHtml = `<div style="margin-bottom: 10px;"><span style="text-decoration: line-through; color: #999; font-size: 11px;">${formatRp(item.price)}</span><div class="price-tag" style="color: var(--discount-color); margin-top: -5px;">${formatRp(item.promo_price)}</div></div>`;
                 }
-
+                
                 let action = isHabis ? `<button class="add-btn" disabled>Habis Terjual</button>` : 
                     (qty > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="updateQty('${item.name}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="updateQty('${item.name}',1)">+</button></div>` : 
                     `<button class="add-btn" onclick="updateQty('${item.name}',1)">Tambah</button>`);
@@ -262,8 +249,7 @@
                         ${item.promo ? `<div class="promo-tag-menu">${item.promo}</div>` : ''}
                         <img src="${item.img}" onerror="this.src='https://via.placeholder.com/250'">
                     </div>
-                    <h3>${item.name}</h3>
-                    ${hargaHtml}
+                    <h3>${item.name}</h3>${hargaHtml}
                     <div class="lbl-stok ${isHabis ? 'lbl-habis' : 'lbl-tersedia'}">${isHabis ? '✕ Habis' : '✓ Tersedia'}</div>
                     ${action}
                 </div>`;
@@ -274,23 +260,12 @@
             const idx = cart.findIndex(c => c.name === name);
             const m = menuData.find(x => x.name === name);
             const hargaFinal = (m.promo_price && parseInt(m.promo_price) > 0) ? parseInt(m.promo_price) : parseInt(m.price);
-
-            if (idx > -1) { 
-                cart[idx].qty += change; 
-                if (cart[idx].qty <= 0) cart.splice(idx, 1); 
-            } else { 
-                cart.push({ name, price: hargaFinal, qty: 1 }); 
-            }
+            if (idx > -1) { cart[idx].qty += change; if (cart[idx].qty <= 0) cart.splice(idx, 1); } 
+            else { cart.push({ name, price: hargaFinal, qty: 1 }); }
             updateCartUI(); 
-            
-            // Tetap di kategori yang sedang dibuka
-            const activeTab = document.querySelector('.tab-btn.active').innerText.toLowerCase();
-            let cat = activeTab.includes('promo') ? 'promo' : 
-                      activeTab.includes('makanan') ? 'makanan' : 
-                      activeTab.includes('hits') ? 'jajanan' : 
-                      activeTab.includes('kue') ? 'kue' : 
-                      activeTab.includes('minum') ? 'lainnya' : 'semua';
-            render(cat);
+            const activeTab = document.querySelector('.tab-btn.active');
+            const currentFilter = activeTab.getAttribute('onclick').split("'")[1];
+            render(currentFilter);
         }
 
         function updateCartUI() {
@@ -298,19 +273,14 @@
             const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const notice = document.getElementById('discount-notice');
             let totalFinal = subtotal + ship;
-
             if (subtotal >= MIN_BELANJA_DISKON) {
                 totalFinal -= NOMINAL_DISKON;
                 notice.innerText = `🎉 Selamat! Anda dapat Diskon ${formatRp(NOMINAL_DISKON)}`;
                 notice.className = "discount-notice notice-on";
-                document.getElementById('cart-total').style.color = "var(--discount-color)";
             } else {
-                const kurang = MIN_BELANJA_DISKON - subtotal;
-                notice.innerText = `Belanja ${formatRp(MIN_BELANJA_DISKON)} dapat Diskon ${formatRp(NOMINAL_DISKON)} (Kurang ${formatRp(kurang)})`;
+                notice.innerText = `Belanja ${formatRp(MIN_BELANJA_DISKON)} dapat Diskon ${formatRp(NOMINAL_DISKON)} (Kurang ${formatRp(MIN_BELANJA_DISKON - subtotal)})`;
                 notice.className = "discount-notice notice-off";
-                document.getElementById('cart-total').style.color = "var(--primary)";
             }
-
             document.getElementById('cart-bar').style.display = cart.length ? 'flex' : 'none';
             document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + i.qty, 0) + " Item";
             document.getElementById('cart-total').innerText = formatRp(totalFinal);
@@ -320,14 +290,8 @@
             const shipVal = parseInt(document.getElementById('shipping-method').value);
             const shipText = document.getElementById('shipping-method').options[document.getElementById('shipping-method').selectedIndex].text;
             const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            
-            let diskonDidapat = 0;
-            let diskonText = "";
-            if (subtotal >= MIN_BELANJA_DISKON) {
-                diskonDidapat = NOMINAL_DISKON;
-                diskonText = `\nPotongan Diskon: -${formatRp(NOMINAL_DISKON)}`;
-            }
-            const totalAkhir = (subtotal + shipVal) - diskonDidapat;
+            let diskonText = subtotal >= MIN_BELANJA_DISKON ? `\nPotongan Diskon: -${formatRp(NOMINAL_DISKON)}` : "";
+            const totalAkhir = (subtotal + shipVal) - (subtotal >= MIN_BELANJA_DISKON ? NOMINAL_DISKON : 0);
 
             const daftarPesanan = cart.map(m => {
                 const dataAsli = menuData.find(x => x.name === m.name);
@@ -335,10 +299,7 @@
                 return `✅ *${m.name}* (x${m.qty})${ketPromo}`;
             }).join('\n');
 
-            const pesan = `*STRUK PESANAN - Tester Food*\n----------------------------------\n` +
-                          daftarPesanan + 
-                          `\n----------------------------------\nSubtotal: ${formatRp(subtotal)}\nPengiriman: ${shipText}${diskonText}\n*TOTAL AKHIR: ${formatRp(totalAkhir)}*\n----------------------------------\n_Mohon info ketersediaannya ya Ka..._`;
-            
+            const pesan = `*STRUK PESANAN - Tester Food*\n----------------------------------\n${daftarPesanan}\n----------------------------------\nSubtotal: ${formatRp(subtotal)}\nPengiriman: ${shipText}${diskonText}\n*TOTAL AKHIR: ${formatRp(totalAkhir)}*\n----------------------------------\n_Mohon info ketersediaannya ya Ka..._`;
             window.open(`https://wa.me/${noWA}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
 
@@ -349,21 +310,9 @@
             b.className = "status-badge " + (open ? "status-open" : "status-closed");
         }
 
-        function filterMenu(c, b) { 
-            document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); 
-            b.classList.add('active'); 
-            render(c); 
-        }
-
-        function zoomImg(s) { 
-            document.getElementById('lightbox-img').src = s; 
-            document.getElementById('lightbox').classList.add('active'); 
-        }
-
-        setInterval(() => { 
-            document.getElementById('real-datetime').innerText = new Date().toLocaleString('id-ID'); 
-        }, 1000);
-
+        function filterMenu(c, b) { document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); render(c); }
+        function zoomImg(s) { document.getElementById('lightbox-img').src = s; document.getElementById('lightbox').classList.add('active'); }
+        setInterval(() => { document.getElementById('real-datetime').innerText = new Date().toLocaleString('id-ID'); }, 1000);
         fetchData();
     </script>
 </body>

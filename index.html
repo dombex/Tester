@@ -130,11 +130,12 @@
     </div>
 
     <div class="filter-tabs">
-        <button class="tab-btn active" onclick="filterMenu('semua', this)">Semua</button>
+        <button class="tab-btn active" onclick="filterMenu('promo', this)">🔥 Sedang Promo</button>
         <button class="tab-btn" onclick="filterMenu('makanan', this)"> 🍛 Makanan</button>
         <button class="tab-btn" onclick="filterMenu('jajanan', this)"> 🍟 Cemilan Hits</button>
         <button class="tab-btn" onclick="filterMenu('kue', this)"> 🍰 Aneka Kue</button>
         <button class="tab-btn" onclick="filterMenu('lainnya', this)"> 🍹Minuman</button>
+        <button class="tab-btn" onclick="filterMenu('semua', this)">Semua Menu</button>
     </div>
 
     <div id="loading-text" style="text-align: center; padding: 40px; color: #888;"><b><i class="fas fa-spinner fa-spin"></i> Menyiapkan Menu Lezat...</b></div>
@@ -177,19 +178,13 @@
     </div>
 
     <script>
-        // ==========================================
-        // 🛠️ PENGATURAN MANUAL JURAGAN DI SINI
-        // ==========================================
         const noWA = "6285725493220"; 
         const sheetDB_URL = "https://sheetdb.io/api/v1/s0wonu3gxal7h"; 
-        
-        const MIN_BELANJA_DISKON = 100000; // Syarat minimal belanja
-        const NOMINAL_DISKON = 5000;      // Jumlah potongan harga
-        // ==========================================
+        const MIN_BELANJA_DISKON = 100000; 
+        const NOMINAL_DISKON = 5000;      
 
         let menuData = []; let cart = [];
 
-        // Fungsi format rupiah
         const formatRp = (n) => "Rp " + parseInt(n).toLocaleString('id-ID');
 
         async function fetchData() {
@@ -197,7 +192,10 @@
                 const response = await fetch(sheetDB_URL);
                 menuData = await response.json();
                 document.getElementById('loading-text').style.display = 'none';
-                checkStatus(menuData[0].toko); render(); initPromo(menuData);
+                checkStatus(menuData[0].toko); 
+                // DEFAULT TAMPILKAN PROMO SAAT BUKA
+                render('promo'); 
+                initPromo(menuData);
             } catch (e) { document.getElementById('loading-text').innerText = "Gagal memuat!"; }
         }
 
@@ -222,12 +220,39 @@
             }, 4500);
         }
 
-        function render(f = 'semua') {
+        function render(f = 'promo') {
             const list = document.getElementById('menu-list'); list.innerHTML = "";
-            menuData.filter(i => (f === 'semua' || i.cat === f) && i.name).forEach(item => {
+            
+            // LOGIKA FILTER BARU
+            const filtered = menuData.filter(i => {
+                if (!i.name) return false;
+                if (f === 'semua') return true;
+                if (f === 'promo') {
+                    // Cek apakah ada promo_price ATAU ada teks di kolom promo
+                    return (i.promo_price && parseInt(i.promo_price) > 0) || (i.promo && i.promo.trim() !== "");
+                }
+                return i.cat === f;
+            });
+
+            if (filtered.length === 0 && f === 'promo') {
+                list.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">Belum ada menu promo hari ini.</div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
                 const cartItem = cart.find(c => c.name === item.name);
                 const qty = cartItem ? cartItem.qty : 0;
                 const isHabis = item.status === "Habis";
+
+                let hargaHtml = `<div class="price-tag">${formatRp(item.price)}</div>`;
+                if (item.promo_price && parseInt(item.promo_price) > 0) {
+                    hargaHtml = `
+                        <div style="margin-bottom: 10px;">
+                            <span style="text-decoration: line-through; color: #999; font-size: 11px;">${formatRp(item.price)}</span>
+                            <div class="price-tag" style="color: var(--discount-color); margin-top: -5px;">${formatRp(item.promo_price)}</div>
+                        </div>`;
+                }
+
                 let action = isHabis ? `<button class="add-btn" disabled>Habis Terjual</button>` : 
                     (qty > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="updateQty('${item.name}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="updateQty('${item.name}',1)">+</button></div>` : 
                     `<button class="add-btn" onclick="updateQty('${item.name}',1)">Tambah</button>`);
@@ -238,7 +263,7 @@
                         <img src="${item.img}" onerror="this.src='https://via.placeholder.com/250'">
                     </div>
                     <h3>${item.name}</h3>
-                    <div class="price-tag">${formatRp(item.price)}</div>
+                    ${hargaHtml}
                     <div class="lbl-stok ${isHabis ? 'lbl-habis' : 'lbl-tersedia'}">${isHabis ? '✕ Habis' : '✓ Tersedia'}</div>
                     ${action}
                 </div>`;
@@ -247,11 +272,24 @@
 
         function updateQty(name, change) {
             const idx = cart.findIndex(c => c.name === name);
-            if (idx > -1) { cart[idx].qty += change; if (cart[idx].qty <= 0) cart.splice(idx, 1); }
-            else { const m = menuData.find(x => x.name === name); cart.push({ name, price: parseInt(m.price), qty: 1 }); }
+            const m = menuData.find(x => x.name === name);
+            const hargaFinal = (m.promo_price && parseInt(m.promo_price) > 0) ? parseInt(m.promo_price) : parseInt(m.price);
+
+            if (idx > -1) { 
+                cart[idx].qty += change; 
+                if (cart[idx].qty <= 0) cart.splice(idx, 1); 
+            } else { 
+                cart.push({ name, price: hargaFinal, qty: 1 }); 
+            }
             updateCartUI(); 
+            
+            // Tetap di kategori yang sedang dibuka
             const activeTab = document.querySelector('.tab-btn.active').innerText.toLowerCase();
-            let cat = activeTab.includes('makanan') ? 'makanan' : activeTab.includes('hits') ? 'jajanan' : activeTab.includes('kue') ? 'kue' : activeTab.includes('minum') ? 'lainnya' : 'semua';
+            let cat = activeTab.includes('promo') ? 'promo' : 
+                      activeTab.includes('makanan') ? 'makanan' : 
+                      activeTab.includes('hits') ? 'jajanan' : 
+                      activeTab.includes('kue') ? 'kue' : 
+                      activeTab.includes('minum') ? 'lainnya' : 'semua';
             render(cat);
         }
 
@@ -274,7 +312,7 @@
             }
 
             document.getElementById('cart-bar').style.display = cart.length ? 'flex' : 'none';
-            document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + i.qty, 0) + " Menu";
+            document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + i.qty, 0) + " Item";
             document.getElementById('cart-total').innerText = formatRp(totalFinal);
         }
 
@@ -285,17 +323,20 @@
             
             let diskonDidapat = 0;
             let diskonText = "";
-
             if (subtotal >= MIN_BELANJA_DISKON) {
                 diskonDidapat = NOMINAL_DISKON;
                 diskonText = `\nPotongan Diskon: -${formatRp(NOMINAL_DISKON)}`;
             }
-
-            // HITUNG TOTAL AKHIR DENGAN BENAR
             const totalAkhir = (subtotal + shipVal) - diskonDidapat;
 
+            const daftarPesanan = cart.map(m => {
+                const dataAsli = menuData.find(x => x.name === m.name);
+                const ketPromo = (dataAsli && dataAsli.promo) ? `\n   (_ket: ${dataAsli.promo}_)` : "";
+                return `✅ *${m.name}* (x${m.qty})${ketPromo}`;
+            }).join('\n');
+
             const pesan = `*STRUK PESANAN - Tester Food*\n----------------------------------\n` +
-                          cart.map(m => `✅ *${m.name}* (x${m.qty})`).join('\n') + 
+                          daftarPesanan + 
                           `\n----------------------------------\nSubtotal: ${formatRp(subtotal)}\nPengiriman: ${shipText}${diskonText}\n*TOTAL AKHIR: ${formatRp(totalAkhir)}*\n----------------------------------\n_Mohon info ketersediaannya ya Ka..._`;
             
             window.open(`https://wa.me/${noWA}?text=${encodeURIComponent(pesan)}`, '_blank');
@@ -308,11 +349,22 @@
             b.className = "status-badge " + (open ? "status-open" : "status-closed");
         }
 
-        function filterMenu(c, b) { document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); render(c); }
-        function zoomImg(s) { document.getElementById('lightbox-img').src = s; document.getElementById('lightbox').classList.add('active'); }
-        setInterval(() => { document.getElementById('real-datetime').innerText = new Date().toLocaleString('id-ID'); }, 1000);
+        function filterMenu(c, b) { 
+            document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); 
+            b.classList.add('active'); 
+            render(c); 
+        }
+
+        function zoomImg(s) { 
+            document.getElementById('lightbox-img').src = s; 
+            document.getElementById('lightbox').classList.add('active'); 
+        }
+
+        setInterval(() => { 
+            document.getElementById('real-datetime').innerText = new Date().toLocaleString('id-ID'); 
+        }, 1000);
+
         fetchData();
     </script>
 </body>
 </html>
-

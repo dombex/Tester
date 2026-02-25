@@ -293,13 +293,25 @@
             let diskonText = subtotal >= MIN_BELANJA_DISKON ? `\nPotongan Diskon: -${formatRp(NOMINAL_DISKON)}` : "";
             const totalAkhir = (subtotal + shipVal) - (subtotal >= MIN_BELANJA_DISKON ? NOMINAL_DISKON : 0);
 
+            // TAMPILAN HARGA PER MENU DI WA
             const daftarPesanan = cart.map(m => {
                 const dataAsli = menuData.find(x => x.name === m.name);
-                const ketPromo = (dataAsli && dataAsli.promo) ? `\n   (_ket: ${dataAsli.promo}_)` : "";
-                return `✅ *${m.name}* (x${m.qty})${ketPromo}`;
-            }).join('\n');
+                const ketPromo = (dataAsli && dataAsli.promo) ? `\n    (_ket: ${dataAsli.promo}_)` : "";
+                const totalItem = m.price * m.qty;
+                return `✅ *${m.name}*\n    ${m.qty} x ${formatRp(m.price)} = *${formatRp(totalItem)}*${ketPromo}`;
+            }).join('\n\n');
 
-            const pesan = `*STRUK PESANAN - Tester Food*\n----------------------------------\n${daftarPesanan}\n----------------------------------\nSubtotal: ${formatRp(subtotal)}\nPengiriman: ${shipText}${diskonText}\n*TOTAL AKHIR: ${formatRp(totalAkhir)}*\n----------------------------------\n_Mohon info ketersediaannya ya Ka..._`;
+            const pesan = `*STRUK PESANAN - Tester Food*\n` +
+                          `----------------------------------\n` +
+                          `${daftarPesanan}\n` +
+                          `----------------------------------\n` +
+                          `Total Menu: ${formatRp(subtotal)}\n` +
+                          `Pengiriman: ${shipText}\n` +
+                          `${diskonText}` +
+                          `*TOTAL AKHIR: ${formatRp(totalAkhir)}*\n` +
+                          `----------------------------------\n` +
+                          `_Mohon info ketersediaannya ya Ka..._`;
+
             window.open(`https://wa.me/${noWA}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
 
